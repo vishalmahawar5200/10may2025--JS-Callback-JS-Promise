@@ -76,5 +76,12 @@ pipeline {
                 }
             }
         }
+        
+        stage('SSL Provisioning'){
+            steps{
+                //echo "may11 IN A 65.108.149.111" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
+                
+            }
+        }
     }
 }
