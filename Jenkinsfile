@@ -1,8 +1,8 @@
 pipeline {
     agent any
     environment {
-        DOCKER_IMAGE = "vishalmahawar5200/10may2025"
-        DOCKER_USER = "root"
+        DOCKER_IMAGE = "vishalmahawar5200/9may2025"
+        DEPLOY_USER = "root"
         DEPLOY_HOST = "65.108.149.166"
     }
 
@@ -60,16 +60,17 @@ pipeline {
 
         stage('Deploy to Another Server'){
             steps{
-                sshagent(credentials: ['ID_RSA']){
+                sshagent (credentials: ['ID_RSA']) {
                     script{
                         def imageTag = "v${env.BUILD_NUMBER}"
                         sh """
                             hostname && hostname -I
-                            ssh -o StrictHostChecking=no $DEPLOY_USER@$DEPLOY_HOST '
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
                             hostname && hostname -I
                             docker pull ${DOCKER_IMAGE}:${imageTag}
-                            docker run -d -p 8032:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
+                           docker run -d -p 8032:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
                         '
+                        hostname && hostname -I
                         """
                     }
                 }
