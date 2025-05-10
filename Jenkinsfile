@@ -68,7 +68,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
                             hostname && hostname -I
                             docker pull ${DOCKER_IMAGE}:${imageTag}
-                           docker run -d -p 8055:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
+                            docker run -d -p 8055:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
                         '
                         hostname && hostname -I
                         """
@@ -78,9 +78,10 @@ pipeline {
         }
         
         stage('SSL Provisioning'){
-            steps{
-                echo "april-03-2025-v${env.BUILD_NUMBER}. IN A 65.108.149.169" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
-                
+            steps {
+                script {
+                    sh "echo \"april-03-2025-v${env.BUILD_NUMBER}. IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
+                }
             }
         }
     }
