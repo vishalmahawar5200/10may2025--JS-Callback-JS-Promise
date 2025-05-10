@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_IMAGE = "vishalmahawar5200/9may2025"
+        DOCKER_IMAGE = "vishalmahawar5200/10may2025"
         DEPLOY_USER = "root"
         DEPLOY_HOST = "65.108.149.166"
     }
