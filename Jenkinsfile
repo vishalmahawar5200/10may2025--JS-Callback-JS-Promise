@@ -37,7 +37,7 @@ pipeline {
 
         stage('Build Image'){
             steps{
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', userVariable: 'USER')]) {
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
                     sh 'docker build -t ${DOCKER_IMAGE}:latest .'
                     sh "echo $PASS | docker login -u $USER --password-stdin"
                 }
