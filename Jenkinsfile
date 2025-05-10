@@ -80,7 +80,7 @@ pipeline {
         stage('SSL Provisioning'){
             steps {
                 script {
-                    sh "echo \"april-03-2025-v${env.BUILD_NUMBER}. IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
+                    sh "echo \"april-03-2025-v${env.BUILD_NUMBER} IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
                 }
             }
         }
