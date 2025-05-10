@@ -61,7 +61,7 @@ pipeline {
         stage('Deploy to Another Server'){
             steps{
                 sshagent(credentials: ['ID_RSA']){
-                    def imageTag = "v${env.BUILD_NUMBER}"
+                     def imageTag = "v${env.BUILD_NUMBER}"
                     sh """
                     hostname && hostname -I
                     ssh -o StrictHostChecking=no $DEPLOY_USER@$DEPLOY_HOST '
