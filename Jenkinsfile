@@ -1,12 +1,12 @@
 pipeline {
     agent any
-    environment{
+    environment {
         DOCKER_IMAGE = "vishalmahawar5200/10may2025"
     }
 
-    stages{
-        stage('Install Docker Dependencies'){
-            steps{
+    stages {
+        stage('Install Docker dependencies') {
+            steps {
                 sh '''
                     apt update
                     apt upgrade -y
@@ -14,7 +14,7 @@ pipeline {
                 '''
             }
         }
-        
+
         stage('Start Docker Daemon (if not running)') {
             steps {
                 sh '''
@@ -29,24 +29,24 @@ pipeline {
             }
         }
 
-        stage('Check Version'){
-            steps{
+        stage('Check Version') {
+            steps {
                 sh "docker --version"
             }
         }
 
-        stage('Build Image'){
-            steps{
+        stage('Build Image') {
+            steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                    sh 'docker build -t ${DOCKER_IMAGE}:latest .'
+                    sh 'docker build -t ${DOCKER_IMAGE}:t1 .'
                     sh "echo $PASS | docker login -u $USER --password-stdin"
                 }
             }
         }
 
-        stage('Push Docker Image'){
-            steps{
-                script{
+        stage('Push Docker Image') {
+            steps {
+                script {
                     withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
                         def imageTag = "v${env.BUILD_NUMBER}"
                         sh "docker tag ${DOCKER_IMAGE}:t1 ${DOCKER_IMAGE}:${imageTag}"
