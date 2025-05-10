@@ -1,4 +1,4 @@
-﻿pipeline {
+pipeline {
     agent any
     environment{
         DOCKER_IMAGE = "vishalmahawar5200/10may2025"
