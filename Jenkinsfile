@@ -38,8 +38,19 @@ pipeline {
         stage('Build Image'){
             steps{
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                    sh 'docker build -t ${DOCKER_IMAGE}:latest .'
+                    sh 'docker build -t ${DOCKER_IMAGE}:t1 .'
                     sh "echo $PASS | docker login -u $USER --password-stdin"
+                }
+            }
+        }
+
+        stage('Push Docker Image'){
+            steps{
+                script{
+                    withwithCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        def imageTag = "v${env.BUILD_NUMBER}"
+                        sh "docker tag ${DOCKER_IMAGE}:t1 ${DOCKER_IMAGE}:${imageTag}"
+                        sh "docker push ${DOCKER_IMAGE}:${imageTag}"
                 }
             }
         }
