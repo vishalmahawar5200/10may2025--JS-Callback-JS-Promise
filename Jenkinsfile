@@ -61,15 +61,17 @@ pipeline {
         stage('Deploy to Another Server'){
             steps{
                 sshagent(credentials: ['ID_RSA']){
-                     def imageTag = "v${env.BUILD_NUMBER}"
-                    sh """
-                    hostname && hostname -I
-                    ssh -o StrictHostChecking=no $DEPLOY_USER@$DEPLOY_HOST '
-                    hostname && hostname -I
-                    docker pull ${DOCKER_IMAGE}:${imageTag}
-                     docker run -d -p 8032:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
-                    '
-                    """
+                    script{
+                        def imageTag = "v${env.BUILD_NUMBER}"
+                        sh """
+                            hostname && hostname -I
+                            ssh -o StrictHostChecking=no $DEPLOY_USER@$DEPLOY_HOST '
+                            hostname && hostname -I
+                            docker pull ${DOCKER_IMAGE}:${imageTag}
+                            docker run -d -p 8032:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
+                        '
+                        """
+                    }
                 }
             }
         }
