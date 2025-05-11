@@ -100,7 +100,6 @@ pipeline {
         stage("test"){
             steps{
                 script{
-                    import java.time.LocalDate  //LocalDate is a case of PascalCase
                     def today = LocalDate.now()
                     def day = today.dayOfMonth
                     def month = today.monthValue
