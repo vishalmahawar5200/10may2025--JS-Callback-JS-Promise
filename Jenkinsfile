@@ -95,8 +95,9 @@ pipeline {
                 script {
                     // Ensure D_DATE is properly referenced
                     def dateString = "${env.D_DATE}-v${env.BUILD_NUMBER}"
+                    def ipAddress = env.PUBLIC_IP
                     sh """
-                        echo "${dateString} IN A 65.108.149.169" | \
+                        echo "${dateString} IN A ${ipAddress}" | \
                         docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
                     """
                 }
