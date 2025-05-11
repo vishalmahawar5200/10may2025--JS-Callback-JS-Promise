@@ -62,22 +62,17 @@ pipeline {
         stage('check'){
             steps{
                 script{
-                    //def is keyword to define variable
                     def buildNumberStr = env.BUILD_NUMBER
-                    //object.member
-                    //object.property
-                    //object.method()
                     def buildNumberInt = buildNumberStr.toInteger() //Convert string to integer
                     echo "Converted Build Number (Integer): ${buildNumberInt} (Type: ${buildNumberInt.getClass().getName()})"
                 }
             }
         }
 
-         stage("test") {
+        stage("test") {
             steps {
                 script {
                     def currentDate = java.time.LocalDate.now()
-                    
                     // Define the formatter for "MonthName-Day-Year" format
                     def formatter = java.time.format.DateTimeFormatter.ofPattern("MMM-dd-yyyy")
                     def formattedDate = currentDate.format(formatter)
@@ -96,11 +91,11 @@ pipeline {
         stage('SSL Provisioning') {
             steps {
                 script {
-                    // Ensure D_DATE is properly referenced
-                    def dateString = "${env.D_DATE}-v${env.BUILD_NUMBER}"
-                    sh """
-                          echo "\$(date +%B-%d-%Y | tr '[:upper:]' '[:lower:]')-v${env.BUILD_NUMBER} IN A 65.108.149.165 | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
-                    """
+                     // Ensure D_DATE is properly referenced
+                     def dateString = "${env.D_DATE}-v${env.BUILD_NUMBER}"
+                     sh """
+                         echo \$(date +%B-%d-%Y | tr '[:upper:]' '[:lower:]')-v${env.BUILD_NUMBER} IN A 65.108.149.155| docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
+                     """
                 }
             }
         }
@@ -110,17 +105,15 @@ pipeline {
                 sshagent (credentials: ['ID_RSA']) {
                     script{
                         def imageTag = "v${env.BUILD_NUMBER}";
-                        //TypeCasting is the process to convert one data to another datatype
                         def hostPort = 8000 + env.BUILD_NUMBER.toInteger(); 
-                        //po.then().then().then().catch().finally()
                         sh """
                             hostname && hostname -I
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
                             hostname && hostname -I
                             docker pull ${DOCKER_IMAGE}:${imageTag}
                             docker run -d -p ${hostPort}:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
-                        '
-                        hostname && hostname -I
+                            '
+                            hostname && hostname -I
                         """
                     }
                 }
