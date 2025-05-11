@@ -100,6 +100,7 @@ pipeline {
         stage("test"){
             steps{
                 script{
+                    def today = java.time.LocalDate.now()
                     def today = LocalDate.now()
                     def day = today.dayOfMonth
                     def month = today.monthValue
@@ -109,6 +110,11 @@ pipeline {
                     println "Month: $month"
                     println "Year: $year"
                     echo "Today is : ${day}-${month}-${year}"
+
+                       // Store for next stage
+                       env.Day = day.toString()
+                       env.month = month.toString()
+                       env.year = year.toString()
                 }
             }
         }
