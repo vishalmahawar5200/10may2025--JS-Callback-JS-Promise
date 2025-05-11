@@ -123,8 +123,6 @@ pipeline {
                 sshagent(credentials: ['ID_RSA']) {
                     script{
                         def sslDomain = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
-                        def hostPort = sh(script: "ss -tuln | grep ':8051' | awk '{print \$4}' | cut -d':' -f2", returnStdout: true).trim()
-
                         sh """
                             hostname && hostname -I
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname && hostname -I'
@@ -147,8 +145,8 @@ pipeline {
     RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
 
     ProxyPreserveHost On
-    ProxyPass / http://localhost:${hostPort}/
-    ProxyPassReverse / http://localhost:${hostPort}/
+    ProxyPass / http://localhost:8065/
+    ProxyPassReverse / http://localhost:8065/
 </VirtualHost>
 VHOST
                         # 4. Enable the new site and reload Apache
