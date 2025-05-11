@@ -80,6 +80,7 @@ pipeline {
                         def imageTag = "v${env.BUILD_NUMBER}";
                         //TypeCasting is the process to convert one data to another datatype
                         def hostPort = 8000 + env.BUILD_NUMBER.toInteger(); 
+                        //po.then().then().then().catch().finally()
                         sh """
                             hostname && hostname -I
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
@@ -94,10 +95,20 @@ pipeline {
             }
         }
         
+
+        //Stage is a function defination
+        stage("test"){
+            steps{
+                script{
+                    def month = "${May}"
+                }
+            }
+        }
+
         stage('SSL Provisioning'){
             steps {
                 script {
-                    sh "echo \"april-03-2025-v${env.BUILD_NUMBER} IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
+                    sh "echo \"${May}-v${env.BUILD_NUMBER} IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
                 }
             }
         }
