@@ -60,8 +60,10 @@ pipeline {
 
         stage('check'){
             steps{
-                def buildNumber = env.BUILD_NUMBER
-                println buildNumber.getClass().getName()    
+                script{
+                    def buildNumber = env.BUILD_NUMBER
+                    echo "Build Number: ${buildNumber}"
+                }
             }
         }
 
