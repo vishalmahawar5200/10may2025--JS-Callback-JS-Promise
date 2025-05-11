@@ -121,6 +121,7 @@ pipeline {
             steps{
                 sshagent(credentials: ['ID_RSA']) {
                     script{
+                        def sslDomain = "${env.D_Date}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
                         sh """
                             hostname && hostname -I
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname && hostname -I'
@@ -128,7 +129,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo apt install -y certbot python3-certbot-apache'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'                        
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo certbot --apache -d vishalmahawar.shop'
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo certbot --apache -d ${sslDomain}'
                         """
                     }
                 }
