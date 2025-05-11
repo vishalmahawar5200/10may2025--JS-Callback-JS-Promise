@@ -83,7 +83,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
                             hostname && hostname -I
                             docker pull ${DOCKER_IMAGE}:${imageTag}
-                            docker run -d -p 8000+1:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
+                            docker run -d -p 8000+${env.BUILD_NUMBER}:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
                         '
                         hostname && hostname -I
                         """
