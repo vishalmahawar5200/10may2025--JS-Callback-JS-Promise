@@ -130,7 +130,34 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo apt install -y certbot python3-certbot-apache'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'                        
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo certbot --apache -d ${sslDomain}'
+                        """
+                        sh """
+                            #3. Generate the vhost file dynamically
+                            cat <<VHOST | sudo tee /etc/apache2/sites-available/${sslDomain}.conf
+<VirtualHost *:80>
+    ServerName ${sslDomain}
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:${hostPort}/
+    ProxyPassReverse / http://localhost:${hostPort}/
+
+    RewriteEngine on
+    RewriteCond %{SERVER_NAME} =${sslDomain}
+    RewriteRule ^ https://${sslDomain}%{REQUEST_URI} [END,NE,R=permanent]
+</VirtualHost>
+VHOST
+                        # 4. Enable the new site and reload Apache
+                        sudo a2ensite ${sslDomain}.conf
+                        sudo systemctl reload apache2
+
+                          # 5. Obtain (and install) the SSL certificate non-interactively
+                        sudo certbot --apache \\
+                            --non-interactive \\
+                            --agree-tos \\
+                            --email vishalmahawar5200@gmail.com \\
+                            -d ${sslDomain}
+
+                         # 6. Confirm renewal job exists
+                        sudo systemctl list-timers | grep certbot || true
                         """
                     }
                 }
