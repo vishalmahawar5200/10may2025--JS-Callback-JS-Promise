@@ -117,10 +117,10 @@ pipeline {
             }
         }
 
-        stage('SSL Settingup') {
-            steps {
+        stage('SSL Settingup'){
+            steps{
                 sshagent(credentials: ['ID_RSA']) {
-                    script {
+                    script{
                         def sslDomain = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
                         def hostPort = sh(script: "ss -tuln | grep ':8051' | awk '{print \$4}' | cut -d':' -f2", returnStdout: true).trim()
 
@@ -134,19 +134,9 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo apt install -y certbot python3-certbot-apache'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'                        
                         """
-
-                        // Additional script for handling vhost file creation and SSL setup
                         sh """
-                            # Ensure the directory exists, but if it's already a directory, remove it and create the file
-                            if [ -d "/etc/apache2/sites-available/${sslDomain}.conf" ]; then
-                                echo "Error: A directory with the same name exists, removing it."
-                                rm -rf "/etc/apache2/sites-available/${sslDomain}.conf"
-                            fi
-
-                            # Create the file
-                            touch /etc/apache2/sites-available/${sslDomain}.conf
-
-                            # Dynamically generate the vhost file
+                            mkdir -p /etc/apache2/sites-available/${sslDomain}.conf
+                            #3. Generate the vhost file dynamically
                             cat <<VHOST | tee /etc/apache2/sites-available/${sslDomain}.conf
 <VirtualHost *:80>
     ServerName ${sslDomain}
@@ -156,58 +146,22 @@ pipeline {
 
     RewriteEngine on
     RewriteCond %{SERVER_NAME} =${sslDomain}
-    RewriteRule ^ https://${sslDomain}%{REQUEST_URI} [END,NE,R=permanent]
+    RewriteRule ^ https://${sslDomain}\\${REQUEST_URI} [END,NE,R=permanent]
 </VirtualHost>
 VHOST
+                        # 4. Enable the new site and reload Apache
+                        sudo a2ensite ${sslDomain}.conf
+                        sudo systemctl reload apache2
 
-                            # Check if vhost file was successfully created
-                            if [ $? -ne 0 ]; then
-                                echo "Error: Failed to create the vhost file ${sslDomain}.conf"
-                                exit 1
-                            fi
+                          # 5. Obtain (and install) the SSL certificate non-interactively
+                        sudo certbot --apache \\
+                            --non-interactive \\
+                            --agree-tos \\
+                            --email vishalmahawar5200@gmail.com \\
+                            -d ${sslDomain}
 
-                            # Ensure proper permissions on the file
-                            chmod 644 /etc/apache2/sites-available/${sslDomain}.conf
-                            if [ $? -ne 0 ]; then
-                                echo "Error: Failed to set proper permissions on the vhost file"
-                                exit 1
-                            fi
-
-                            # Enable the new site and reload Apache
-                            sudo a2ensite ${sslDomain}.conf
-                            if [ $? -ne 0 ]; then
-                                echo "Error: Failed to enable the site ${sslDomain}.conf"
-                                exit 1
-                            fi
-
-                            sudo systemctl reload apache2
-                            if [ $? -ne 0 ]; then
-                                echo "Error: Failed to reload Apache"
-                                exit 1
-                            fi
-
-                            # Obtain (and install) the SSL certificate non-interactively
-                            sudo certbot --apache \\
-                                --non-interactive \\
-                                --agree-tos \\
-                                --email vishalmahawar5200@gmail.com \\
-                                -d ${sslDomain}
-
-                            # Check if certbot command was successful
-                            if [ $? -ne 0 ]; then
-                                echo "Error: Failed to obtain SSL certificate for ${sslDomain}"
-                                exit 1
-                            fi
-
-                            # Confirm renewal job exists
-                            sudo systemctl list-timers | grep certbot || true
-                            if [ $? -ne 0 ]; then
-                                echo "Error: Certbot renewal job does not exist"
-                                exit 1
-                            fi
-
-                            # Success message
-                            echo "SSL setup for ${sslDomain} completed successfully!"
+                         # 6. Confirm renewal job exists
+                         sudo systemctl list-timers | grep certbot || true
                         """
                     }
                 }
