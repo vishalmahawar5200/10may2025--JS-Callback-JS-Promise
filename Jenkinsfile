@@ -99,8 +99,8 @@ pipeline {
                     // Ensure D_DATE is properly referenced
                     def dateString = "${env.D_DATE}-v${env.BUILD_NUMBER}"
                     sh """
-                        echo "$(date +%B-%d-%Y | tr '[:upper:]' '[:lower:]')-v33 IN A 65.108.149.163"
-                        docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
+                          echo "\$(date +%B-%d-%Y | tr '[:upper:]' '[:lower:]')-v33 IN A 65.108.149.163"
+                          docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
                     """
                 }
             }
