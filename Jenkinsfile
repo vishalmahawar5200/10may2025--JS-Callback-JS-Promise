@@ -73,25 +73,32 @@ pipeline {
             }
         }
 
-        stage("test"){
-            steps{
-                script{
+         stage("test") {
+            steps {
+                script {
                     def currentDate = java.time.LocalDate.now()
+                    
+                    // Define the formatter for "MonthName-Day-Year" format
                     def formatter = java.time.format.DateTimeFormatter.ofPattern("MMM-dd-yyyy")
-                    def formattedDate = currentDate.format(DateTimeFormatter)
+                    def formattedDate = currentDate.format(formatter)
 
                     echo "Formatted Date is : ${formattedDate}"
 
-                    env.FORMATTED_DATE = formattedDate
+                    // Save to environment variables for use in the next stage
+                    env.D_DATE = formattedDate
                 }
             }
         }
 
-        stage('SSL Provisioning'){
+        stage('SSL Provisioning') {
             steps {
                 script {
-                    def dateString = "${env.FORMATTED_DATE}-v${env.BUILD_NUMBER}""
-                    sh "echo \"${dateString}-v${env.BUILD_NUMBER} IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
+                    // Ensure D_DATE is properly referenced
+                    def dateString = "${env.D_DATE}-v${env.BUILD_NUMBER}"
+                    sh """
+                        echo "${dateString} IN A 65.108.149.169" | \
+                        docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
+                    """
                 }
             }
         }
