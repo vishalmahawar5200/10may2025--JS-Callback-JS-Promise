@@ -129,7 +129,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname && hostname -I'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt update -y'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt install sudo -y'
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt install -y sudo -y'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo systemctl stop ufw && systemctl disable ufw'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo apt install -y certbot python3-certbot-apache'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'                        
