@@ -141,13 +141,14 @@ pipeline {
                             cat <<VHOST | tee /etc/apache2/sites-available/${sslDomain}.conf
 <VirtualHost *:80>
     ServerName ${sslDomain}
-    ProxyPreserveHost On
-    ProxyPass / http://localhost:${hostPort}/
-    ProxyPassReverse / http://localhost:${hostPort}/
 
     RewriteEngine on
     RewriteCond %{SERVER_NAME} =${sslDomain}
-    RewriteRule ^ https://${sslDomain}${requestUri} [END,NE,R=permanent]
+    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
+
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:${hostPort}/
+    ProxyPassReverse / http://localhost:${hostPort}/
 </VirtualHost>
 VHOST
                         # 4. Enable the new site and reload Apache
