@@ -58,32 +58,29 @@ pipeline {
             }
         }
 
-        //Stage is a function
-        stage('check'){
-            steps{
-                script{
+        stage('Check Build Number') {
+            steps {
+                script {
                     def buildNumberStr = env.BUILD_NUMBER
-                    def buildNumberInt = buildNumberStr.toInteger() //Convert string to integer
+                    def buildNumberInt = buildNumberStr.toInteger() // Convert string to integer
                     echo "Converted Build Number (Integer): ${buildNumberInt} (Type: ${buildNumberInt.getClass().getName()})"
                 }
             }
         }
 
-        stage("test") {
+        stage('Format Date') {
             steps {
                 script {
                     def currentDate = java.time.LocalDate.now()
-                    // Define the formatter for "MonthName-Day-Year" format
                     def formatter = java.time.format.DateTimeFormatter.ofPattern("MMM-dd-yyyy")
                     def formattedDate = currentDate.format(formatter)
 
-                    //Convert the month part to Lowercase
                     def dateParts = formattedDate.split("-")
-                    def month = dateParts[0].toLowerCase()  
-                    def finalDate = formattedDate.replaceFirst(dateParts[0],month)               
+                    def month = dateParts[0].toLowerCase()
+                    def finalDate = formattedDate.replaceFirst(dateParts[0], month)
 
                     // Save to environment variables for use in the next stage
-                    env.D_DATE = formattedDate
+                    env.D_DATE = finalDate
                 }
             }
         }
@@ -91,21 +88,21 @@ pipeline {
         stage('SSL Provisioning') {
             steps {
                 script {
-                     // Ensure D_DATE is properly referenced
-                     def dateString = "${env.D_DATE}-v${env.BUILD_NUMBER}"
-                     sh """
-                         echo \$(date +%B-%d-%Y | tr '[:upper:]' '[:lower:]')-v${env.BUILD_NUMBER} IN A 65.108.149.155| docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
-                     """
+                    // Ensure D_DATE is properly referenced
+                    def dateString = "${env.D_DATE}-v${env.BUILD_NUMBER}"
+                    sh """
+                        echo \$(date +%B-%d-%Y | tr '[:upper:]' '[:lower:]')-v${env.BUILD_NUMBER} IN A 65.108.149.165 | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
+                    """
                 }
             }
         }
 
-        stage('Deploy to Another Server'){
-            steps{
-                sshagent (credentials: ['ID_RSA']) {
-                    script{
-                        def imageTag = "v${env.BUILD_NUMBER}";
-                        def hostPort = 8000 + env.BUILD_NUMBER.toInteger(); 
+        stage('Deploy to Another Server') {
+            steps {
+                sshagent(credentials: ['ID_RSA']) {
+                    script {
+                        def imageTag = "v${env.BUILD_NUMBER}"
+                        def hostPort = 8000 + env.BUILD_NUMBER.toInteger()
                         sh """
                             hostname && hostname -I
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
@@ -116,22 +113,20 @@ pipeline {
                             hostname && hostname -I
                         """
                     }
-
-                    stage('SSL Settingup'){
-                        steps{
-                            sh """
-                                hostname && hostname -I
-                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname'
-                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname -I'
-                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt update -y'
-                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
-                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo apt install certbot python3-certbot-apache'
-                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'
-                                hostname && hostname -I
-                            """
-                        }
-                    }
                 }
+            }
+        }
+
+        stage('SSL Settingup'){
+            steps{
+                 sh """
+                    hostname && hostname -I
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname && hostname -I'
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt update -y'
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo apt install -y certbot python3-certbot-apache'
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'                        
+                """
             }
         }
     }
