@@ -61,8 +61,9 @@ pipeline {
         stage('check'){
             steps{
                 script{
-                    def buildNumber = env.BUILD_NUMBER
-                    echo "Type of BUILD_NUMBER: ${buildNumber.getClass().getName()}"
+                   def buildNumberStr = env.BUILD_NUMBER
+                   def buildNumberInt = buildNumberStr.toInteger() //Convert string to integer
+                   echo "Converted Build Number (Integer): ${buildNumberInt} (Type: ${buildNumberInt.getClass().getName()})"
                 }
             }
         }
