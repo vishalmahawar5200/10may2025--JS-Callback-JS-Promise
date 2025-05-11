@@ -39,8 +39,10 @@ pipeline {
 
         stage('Build Image') {
             steps {
+                //withCredentis([],fa2,fa3,....){} is function defination
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
                     sh 'docker build -t ${DOCKER_IMAGE}:t1 .'
+                    // ` ${PASS} ` is string interpolation/variable substiution
                     sh "echo $PASS | docker login -u $USER --password-stdin"
                 }
             }
@@ -58,11 +60,18 @@ pipeline {
             }
         }
 
+        //Stage is a function
         stage('check'){
             steps{
+                //Script is a Block {}   
                 script{
+                    //def is keyword to define variable
                    def buildNumberStr = env.BUILD_NUMBER
+                                       //object.member
+                                       //object.property
+                                       //object.method()
                    def buildNumberInt = buildNumberStr.toInteger() //Convert string to integer
+                   /
                    echo "Converted Build Number (Integer): ${buildNumberInt} (Type: ${buildNumberInt.getClass().getName()})"
                 }
             }
@@ -78,7 +87,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
                             hostname && hostname -I
                             docker pull ${DOCKER_IMAGE}:${imageTag}
-                            docker run -d -p 8000+${env.BUILD_NUMBER}:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
+                            docker run -d -p 8000+1:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
                         '
                         hostname && hostname -I
                         """
