@@ -122,6 +122,8 @@ pipeline {
                 sshagent(credentials: ['ID_RSA']) {
                     script{
                         def sslDomain = "${env.D_Date}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
+                        def hostPort = sh(script: "ss -tuln | grep ':8051' | awk '{print \$4}' | cut -d':' -f2", returnStdout: true).trim()
+
                         sh """
                             hostname && hostname -I
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname && hostname -I'
@@ -157,7 +159,7 @@ VHOST
                             -d ${sslDomain}
 
                          # 6. Confirm renewal job exists
-                        sudo systemctl list-timers | grep certbot || true
+                         sudo systemctl list-timers | grep certbot || true
                         """
                     }
                 }
