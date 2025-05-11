@@ -62,7 +62,7 @@ pipeline {
             steps{
                 script{
                     def buildNumber = env.BUILD_NUMBER
-                    echo "Build Number: ${buildNumber}"
+                    echo "Type of BUILD_NUMBER: ${buildNumber.getClass().getName()}"
                 }
             }
         }
