@@ -4,6 +4,7 @@ pipeline {
         DOCKER_IMAGE = "vishalmahawar5200/10may2025"
         DEPLOY_USER = "root"
         DEPLOY_HOST = "65.108.149.166"
+        SSL_DOMAIN = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
     }
 
     stages {
@@ -146,7 +147,7 @@ pipeline {
 
     RewriteEngine on
     RewriteCond %{SERVER_NAME} =${sslDomain}
-    RewriteRule ^ https://${sslDomain}\\${REQUEST_URI} [END,NE,R=permanent]
+    RewriteRule ^ https://${sslDomain}${requestUri} [END,NE,R=permanent]
 </VirtualHost>
 VHOST
                         # 4. Enable the new site and reload Apache
