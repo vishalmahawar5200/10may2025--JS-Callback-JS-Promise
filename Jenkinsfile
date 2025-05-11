@@ -22,7 +22,7 @@ pipeline {
                 sh '''
                     if ! pgrep dockerd > /dev/null; then
                         echo "Starting Docker Daemon"
-                        nohup dockerd > /tmp/dockerd.log 2>&1 &
+                        nohup dockerd > /tmp/dockerd.log 2>&1 & 
                         sleep 10
                     else
                         echo "Docker daemon is already running"
@@ -39,10 +39,8 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                //withCredentis([],fa2,fa3,....){} is function defination
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
                     sh 'docker build -t ${DOCKER_IMAGE}:t1 .'
-                    // ` ${PASS} ` is string interpolation/variable substiution
                     sh "echo $PASS | docker login -u $USER --password-stdin"
                 }
             }
@@ -63,16 +61,14 @@ pipeline {
         //Stage is a function
         stage('check'){
             steps{
-                //Script is a Block {}   
                 script{
                     //def is keyword to define variable
-                   def buildNumberStr = env.BUILD_NUMBER
-                                       //object.member
-                                       //object.property
-                                       //object.method()
-                   def buildNumberInt = buildNumberStr.toInteger() //Convert string to integer
-                   /
-                   echo "Converted Build Number (Integer): ${buildNumberInt} (Type: ${buildNumberInt.getClass().getName()})"
+                    def buildNumberStr = env.BUILD_NUMBER
+                    //object.member
+                    //object.property
+                    //object.method()
+                    def buildNumberInt = buildNumberStr.toInteger() //Convert string to integer
+                    echo "Converted Build Number (Integer): ${buildNumberInt} (Type: ${buildNumberInt.getClass().getName()})"
                 }
             }
         }
