@@ -128,7 +128,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo apt install -y certbot python3-certbot-apache'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'                        
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo certbot --apache'                        
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo certbot --apache -d vishalmahawar.shop'
                         """
                     }
                 }
