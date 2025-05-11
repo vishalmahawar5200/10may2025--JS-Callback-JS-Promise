@@ -82,7 +82,10 @@ pipeline {
                     def formatter = java.time.format.DateTimeFormatter.ofPattern("MMM-dd-yyyy")
                     def formattedDate = currentDate.format(formatter)
 
-                    echo "Formatted Date is : ${formattedDate}"
+                    //Convert the month part to Lowercase
+                    def dateParts = formattedDate.split("-")
+                    def month = dateParts[0].toLowerCase()  
+                    def finalDate = formattedDate.replaceFirst(dateParts[0],month)               
 
                     // Save to environment variables for use in the next stage
                     env.D_DATE = formattedDate
