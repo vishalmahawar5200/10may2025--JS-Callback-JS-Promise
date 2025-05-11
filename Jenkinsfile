@@ -58,6 +58,13 @@ pipeline {
             }
         }
 
+        stage('check'){
+            steps{
+                def buildNumber = env.BUILD_NUMBER
+                println buildNumber.getClass().getName()    
+            }
+        }
+
         stage('Deploy to Another Server'){
             steps{
                 sshagent (credentials: ['ID_RSA']) {
@@ -68,7 +75,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
                             hostname && hostname -I
                             docker pull ${DOCKER_IMAGE}:${imageTag}
-                            docker run -d -p 8000+"v${env.BUILD_NUMBER}":80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
+                            docker run -d -p 8000+${env.BUILD_NUMBER}:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
                         '
                         hostname && hostname -I
                         """
