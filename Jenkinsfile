@@ -100,11 +100,10 @@ pipeline {
         stage("test"){
             steps{
                 script{
-                    def today = java.time.LocalDate.now()
-                    def today = LocalDate.now()
-                    def day = today.dayOfMonth
-                    def month = today.monthValue
-                    def year = today.year
+                    def currentDate = java.time.LocalDate.now()
+                    def day = currentDate.dayOfMonth
+                    def month = currentDate.monthValue
+                    def year = currentDate.year
 
                     println "Day: $day"
                     println "Month: $month"
