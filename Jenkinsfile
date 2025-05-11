@@ -73,6 +73,29 @@ pipeline {
             }
         }
 
+        stage("test"){
+            steps{
+                script{
+                    def currentDate = java.time.LocalDate.now()
+                    def formatter = java.time.format.DateTimeFormatter.ofPattern("MMM-dd-yyyy")
+                    def formattedDate = currentDate.format(DateTimeFormatter)
+
+                    echo "Formatted Date is : ${formattedDate}"
+
+                    env.FORMATTED_DATE = formattedDate
+                }
+            }
+        }
+
+        stage('SSL Provisioning'){
+            steps {
+                script {
+                    def dateString = "${env.FORMATTED_DATE}-v${env.BUILD_NUMBER}""
+                    sh "echo \"${dateString}-v${env.BUILD_NUMBER} IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
+                }
+            }
+        }
+
         stage('Deploy to Another Server'){
             steps{
                 sshagent (credentials: ['ID_RSA']) {
@@ -91,38 +114,6 @@ pipeline {
                         hostname && hostname -I
                         """
                     }
-                }
-            }
-        }
-        
-
-        //Stage is a function defination
-        stage("test"){
-            steps{
-                script{
-                    def currentDate = java.time.LocalDate.now()
-                    def day = currentDate.dayOfMonth
-                    def month = currentDate.monthValue
-                    def year = currentDate.year
-
-                    println "Day: $day"
-                    println "Month: $month"
-                    println "Year: $year"
-                    echo "Today is : ${day}-${month}-${year}"
-
-                       // Store for next stage
-                       env.Day = day.toString()
-                       env.month = month.toString()
-                       env.year = year.toString()
-                }
-            }
-        }
-
-        stage('SSL Provisioning'){
-            steps {
-                script {
-                    def dateString = "${day}-${month}-${year}"
-                    sh "echo \"${dateString}-v${env.BUILD_NUMBER} IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
                 }
             }
         }
