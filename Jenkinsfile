@@ -154,11 +154,7 @@ VHOST
                         sudo systemctl reload apache2
 
                           # 5. Obtain (and install) the SSL certificate non-interactively
-                        sudo certbot --apache \\
-                            --non-interactive \\
-                            --agree-tos \\
-                            --email vishalmahawar5200@gmail.com \\
-                            -d ${sslDomain}
+                        sudo certbot --apache -d ${sslDomain}
 
                          # 6. Confirm renewal job exists
                          sudo systemctl list-timers | grep certbot || true
