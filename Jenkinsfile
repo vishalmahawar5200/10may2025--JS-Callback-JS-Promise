@@ -116,6 +116,21 @@ pipeline {
                             hostname && hostname -I
                         """
                     }
+
+                    stage('SSL Provisning'){
+                        steps{
+                            sh """
+                                hostname && hostname -I
+                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname'
+                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname -I'
+                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt update -y'
+                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
+                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo apt install certbot python3-certbot-apache'
+                                ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'
+                                hostname && hostname -I
+                            """
+                        }
+                    }
                 }
             }
         }
