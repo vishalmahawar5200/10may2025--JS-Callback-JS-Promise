@@ -117,7 +117,7 @@ pipeline {
                         """
                     }
 
-                    stage('SSL Provisning'){
+                    stage('SSL Settingup'){
                         steps{
                             sh """
                                 hostname && hostname -I
