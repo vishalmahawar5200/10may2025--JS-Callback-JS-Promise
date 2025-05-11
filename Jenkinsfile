@@ -78,8 +78,8 @@ pipeline {
                 sshagent (credentials: ['ID_RSA']) {
                     script{
                         def imageTag = "v${env.BUILD_NUMBER}";
-                        def buildNo = env.BUILD_NUMBER;
-                        def hostPort = 8000 + buildNo.toInteger(); 
+                        //TypeCasting is the process to convert one data to another datatype
+                        def hostPort = 8000 + env.BUILD_NUMBER.toInteger(); 
                         sh """
                             hostname && hostname -I
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
