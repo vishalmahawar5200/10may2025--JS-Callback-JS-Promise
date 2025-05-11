@@ -135,7 +135,7 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'                        
                         """
                         sh """
-
+                            mkdir -p /etc/apache2/sites-available/${sslDomain}.conf
                             #3. Generate the vhost file dynamically
                             cat <<VHOST | tee /etc/apache2/sites-available/${sslDomain}.conf
 <VirtualHost *:80>
