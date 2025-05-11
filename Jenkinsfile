@@ -100,7 +100,16 @@ pipeline {
         stage("test"){
             steps{
                 script{
-                    def month = "${May}"
+                    import java.time.LocalDate  //LocalDate is a case of PascalCase
+                    def today = LocalDate.now()
+                    def day = today.dayOfMonth
+                    def month = today.monthValue
+                    def year = today.year
+
+                    println "Day: $day"
+                    println "Month: $month"
+                    println "Year: $year"
+                    echo "Today is : ${day}-${month}-${year}"
                 }
             }
         }
@@ -108,7 +117,8 @@ pipeline {
         stage('SSL Provisioning'){
             steps {
                 script {
-                    sh "echo \"${May}-v${env.BUILD_NUMBER} IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
+                    def dateString = "${day}-${month}-${year}"
+                    sh "echo \"${dateString}-v${env.BUILD_NUMBER} IN A 65.108.149.169\" | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null"
                 }
             }
         }
