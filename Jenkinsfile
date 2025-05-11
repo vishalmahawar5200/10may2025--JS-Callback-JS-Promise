@@ -137,7 +137,7 @@ pipeline {
                         sh """
 
                             #3. Generate the vhost file dynamically
-                            cat <<VHOST | sudo tee /etc/apache2/sites-available/${sslDomain}.conf
+                            cat <<VHOST | tee /etc/apache2/sites-available/${sslDomain}.conf
 <VirtualHost *:80>
     ServerName ${sslDomain}
     ProxyPreserveHost On
