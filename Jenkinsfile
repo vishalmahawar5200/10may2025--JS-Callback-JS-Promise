@@ -127,28 +127,45 @@ pipeline {
                             apt update -y
                             apt upgrade -y
                             apt install -y certbot python3-certbot-apache
-                            certbot --version
 
-                            cat > /etc/apache2/sites-available/${sslDomain}.conf <<EOL
-<VirtualHost *:80>
-    ServerName ${sslDomain}
+                            # Check if Apache virtual host config file exists
+                            if ! test -f /etc/apache2/sites-available/${sslDomain}.conf; then
+                                echo "Creating Apache virtual host configuration for ${sslDomain}"
 
-    ProxyPreserveHost On
-    ProxyPass / http://localhost:${port}/
-    ProxyPassReverse / http://localhost:${port}/
+                                cat > /etc/apache2/sites-available/${sslDomain}.conf <<EOL
+                                <VirtualHost *:80>
+                                    ServerName ${sslDomain}
 
-    ErrorLog \${APACHE_LOG_DIR}/${sslDomain}_error.log
-    CustomLog \${APACHE_LOG_DIR}/${sslDomain}_access.log combined
-</VirtualHost>
-EOL
+                                    # Setup proxy to backend Docker container
+                                    ProxyPreserveHost On
+                                    ProxyPass / http://localhost:${port}/
+                                    ProxyPassReverse / http://localhost:${port}/
 
-                            sudo a2ensite ${sslDomain}
-                            systemctl reload apache2
+                                    ErrorLog \${APACHE_LOG_DIR}/${sslDomain}_error.log
+                                    CustomLog \${APACHE_LOG_DIR}/${sslDomain}_access.log combined
+                                </VirtualHost>
+                                EOL
+                            else
+                                echo "Apache virtual host configuration for ${sslDomain} already exists"
+                            fi
 
-                            echo "Waiting 120 seconds to DNS to propagate"
+                            # Enable the site and reload Apache
+                            sudo a2ensite ${sslDomain} || echo "Site ${sslDomain} already enabled"
+                            systemctl reload apache2 || echo "Failed to reload Apache, but continuing with SSL setup"
+
+                            # Ensure DNS is propagated before proceeding
+                            echo "Waiting 120 seconds for DNS propagation..."
                             sleep 120
 
-                            certbot --apache -d ${sslDomain} --agree-tos -m vishalmahawar@gmail.com --non-interactive
+                            # Ensure Let's Encrypt challenge directory is accessible
+                            mkdir -p /var/www/html/.well-known/acme-challenge/
+                            chmod -R 755 /var/www/html/.well-known
+
+                            # Provision SSL certificate with Certbot
+                            certbot --apache -d ${sslDomain} --agree-tos -m vishalmahawar@gmail.com --non-interactive || echo "Certbot failed, check logs for errors"
+
+                            # Reload Apache after SSL certificate is obtained
+                            systemctl reload apache2
                             EOF
                         """
                     }
