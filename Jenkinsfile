@@ -105,56 +105,51 @@ pipeline {
                         def imageTag = "v${env.BUILD_NUMBER}"
                         def hostPort = 8000 + env.BUILD_NUMBER.toInteger()
                         sh """
-                            hostname && hostname -I
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
-                            hostname && hostname -I
                             docker pull ${DOCKER_IMAGE}:${imageTag}
                             docker run -d -p ${hostPort}:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
                             '
-                            hostname && hostname -I
                         """
                     }
                 }
             }
         }
 
-        stage('SSL Settingup'){
-            steps{
+        stage('SSL Settingup') {
+            steps {
                 sshagent(credentials: ['ID_RSA']) {
-                    script{
+                    script {
                         def sslDomain = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
                         def port = 8000 + env.BUILD_NUMBER.toInteger()
-                        sh """
-                            hostname && hostname -I
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 
-                            hostname && hostname -I
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt update -y'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt install -y certbot python3-certbot-apache'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'
 
-cat > /etc/apache2/sites-available/${subdomain}.conf <<EOL
+                        sh """
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST <<EOF
+                            apt update -y
+                            apt upgrade -y
+                            apt install -y certbot python3-certbot-apache
+                            certbot --version
+
+                            cat > /etc/apache2/sites-available/${sslDomain}.conf <<EOL
 <VirtualHost *:80>
-    ServerName ${subdomain}
+    ServerName ${sslDomain}
 
     ProxyPreserveHost On
     ProxyPass / http://localhost:${port}/
     ProxyPassReverse / http://localhost:${port}/
 
-    ErrorLog \${APACHE_LOG_DIR}/${subdomain}_error.log
-    CustomLog \${APACHE_LOG_DIR}/${subdomain}_access.log combined
+    ErrorLog \${APACHE_LOG_DIR}/${sslDomain}_error.log
+    CustomLog \${APACHE_LOG_DIR}/${sslDomain}_access.log combined
 </VirtualHost>
 EOL
 
+                            sudo a2ensite ${sslDomain}
+                            systemctl reload apache2
 
-sudo a2ensite  ${sslDomain}
-systemctl reload apache2
+                            echo "Waiting 120 seconds to DNS to propagate"
+                            sleep 120
 
-echo "Waiting 120 seconds to DNS to propagate"
-sleep 120
-
-certbot --apache -d ${sslDomain}--agree-tos-m vishalmahawar@gmail.com --non-interactive
-EOF
+                            certbot --apache -d ${sslDomain} --agree-tos -m vishalmahawar@gmail.com --non-interactive
+                            EOF
                         """
                     }
                 }
