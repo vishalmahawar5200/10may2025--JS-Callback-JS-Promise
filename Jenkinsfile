@@ -123,6 +123,7 @@ pipeline {
                 sshagent(credentials: ['ID_RSA']) {
                     script{
                         def sslDomain = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
+                        def hostPort = 8000 + env.BUILD_NUMBER.toInteger()
                         sh """
                             echo "==> Updating system and installing Certbot"
                             apt update -y
@@ -133,7 +134,7 @@ pipeline {
                             apt install -y certbot python3-certbot-apache                          
 
                             echo "==> Creating Apache VirtualHost config for ${sslDomain}"
-                            cat <<VHOST > /etc/apache2/sites-available/${sslDomain}.conf
+                            cat <<VHOST > tee  /etc/apache2/sites-available/${sslDomain}.conf
 <VirtualHost *:80>
     ServerName ${sslDomain}
 
@@ -142,8 +143,8 @@ pipeline {
     RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
 
     ProxyPreserveHost On
-    ProxyPass / http://localhost:8072/
-    ProxyPassReverse / http://localhost:8072/
+    ProxyPass / http://localhost:${hostPort}/
+    ProxyPassReverse / http://localhost:${hostPort}/
 </VirtualHost>
 EOF
                             echo "==> Enabling site and reloading Apache"
@@ -151,7 +152,7 @@ EOF
                             sudo systemctl reload apache2
 
                             echo "==> Requesting SSL Certificate via Certbot"
-                            sudo certbot --apache --non-interactive --agree-tos -m vishalmahawar5200@gmail.com -d ${sslDomain}
+                            sudo certbot --apache -d ${sslDomain}
 
                             echo "==> Confirming Certbot timer setup"
                             sudo systemctl list-timers | grep certbot || true
