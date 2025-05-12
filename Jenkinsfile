@@ -125,35 +125,37 @@ pipeline {
                         def sslDomain = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
                         def hostPort = 8000 + env.BUILD_NUMBER.toInteger()
                         sh """
-                            echo "==> Updating system and installing Certbot"
-                            apt update -y
-                            apt upgrade -y
-                            apt install -y certbot python3-certbot-apache                          
+                            hostname && hostname -I
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 
+                            hostname && hostname -I
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt update -y'
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt install -y certbot python3-certbot-apache'
+                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --apache'
+
 
                             echo "==> Creating Apache VirtualHost config for ${sslDomain}"
-                            cat <<EOV > /etc/apache2/sites-available/${sslDomain}.conf
-<VirtualHost *:80>
-    ServerName ${sslDomain}
+                            sudo bash -c "cat <<EOV > /etc/apache2/sites-available/${sslDomain}.conf
 
-    RewriteEngine on
-    RewriteCond %{SERVER_NAME} =${sslDomain}
-    RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
-
-    ProxyPreserveHost On
-    ProxyPass / http://localhost:${hostPort}/
-    ProxyPassReverse / http://localhost:${hostPort}/
-</VirtualHost>
-EOF
+                             <VirtualHost *:80>
+                                ServerName ${sslDomain}
+                                RewriteEngine on
+                                RewriteCond %{SERVER_NAME} =${sslDomain}
+                                RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
+                                ProxyPreserveHost On
+                                ProxyPass / http://localhost:${hostPort}/
+                                ProxyPassReverse / http://localhost:${hostPort}/
+                    </VirtualHost>
+                    EOV"
                             echo "==> Enabling site and reloading Apache"
                             sudo a2ensite ${sslDomain}.conf
                             sudo systemctl reload apache2
 
                             echo "==> Requesting SSL Certificate via Certbot"
-                            certbot --apache --non-interactive --agree-tos -m vishalmahawar5200@gmail.com -d ${sslDomain}
+                            sudo certbot --apache --non-interactive --agree-tos -m vishalmahawar5200@gmail.com -d ${sslDomain} || echo "Certbot failed for ${sslDomain}"
 
                             echo "==> Confirming Certbot timer setup"
                             sudo systemctl list-timers | grep certbot || true
-ENDSSH
                         """
                     }
                 }
