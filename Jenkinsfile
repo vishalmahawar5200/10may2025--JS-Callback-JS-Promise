@@ -123,7 +123,7 @@ pipeline {
                 sshagent(credentials: ['ID_RSA']) {
                     script{
                         def sslDomain = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
-                        def hostPort = 8000 + env.BUILD_NUMBER.toInteger()
+                        def port = 8000 + env.BUILD_NUMBER.toInteger()
                         sh """
                             hostname && hostname -I
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 
@@ -133,29 +133,28 @@ pipeline {
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt install -y certbot python3-certbot-apache'
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'
 
+cat > /etc/apache2/sites-available/${subdomain}.conf <<EOL
+<VirtualHost *:80>
+    ServerName ${subdomain}
 
-                            echo "==> Creating Apache VirtualHost config for ${sslDomain}"
-                            sudo bash -c "cat <<EOV > /etc/apache2/sites-available/${sslDomain}.conf
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:${port}/
+    ProxyPassReverse / http://localhost:${port}/
 
-                             <VirtualHost *:80>
-                                ServerName ${sslDomain}
-                                RewriteEngine on
-                                RewriteCond %{SERVER_NAME} =${sslDomain}
-                                RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
-                                ProxyPreserveHost On
-                                ProxyPass / http://localhost:${hostPort}/
-                                ProxyPassReverse / http://localhost:${hostPort}/
-                    </VirtualHost>
-                    EOV"
-                            echo "==> Enabling site and reloading Apache"
-                            sudo a2ensite ${sslDomain}.conf
-                            sudo systemctl reload apache2
+    ErrorLog \${APACHE_LOG_DIR}/${subdomain}_error.log
+    CustomLog \${APACHE_LOG_DIR}/${subdomain}_access.log combined
+</VirtualHost>
+EOL
 
-                            echo "==> Requesting SSL Certificate via Certbot"
-                            sudo certbot --apache --non-interactive --agree-tos -m vishalmahawar5200@gmail.com -d ${sslDomain} || echo "Certbot failed for ${sslDomain}"
 
-                            echo "==> Confirming Certbot timer setup"
-                            sudo systemctl list-timers | grep certbot || true
+sudo a2ensite  ${sslDomain}
+systemctl reload apache2
+
+echo "Waiting 120 seconds to DNS to propagate"
+sleep 120
+
+certbot --apache -d ${sslDomain}--agree-tos-m vishalmahawar@gmail.com --non-interactive
+EOF
                         """
                     }
                 }
