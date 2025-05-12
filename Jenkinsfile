@@ -125,16 +125,15 @@ pipeline {
                         def sslDomain = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
                         sh """
                             echo "==> Updating system and installing Certbot"
-                            sudo apt update -y
-                            sudo apt upgrade -y
-                            sudo apt install -y sudo
-                            sudo systemctl stop ufw || true
-                            sudo systemctl disable ufw || true
-                            sudo apt install -y certbot python3-certbot-apache  &&'certbot --version'                        
+                            apt update -y
+                            apt upgrade -y
+                            apt install -y 
+                            systemctl stop ufw || true
+                            systemctl disable ufw || true
+                            apt install -y certbot python3-certbot-apache  &&'certbot --version'                        
 
                             echo "==> Creating Apache VirtualHost config for ${sslDomain}"
-                            sudo tee /etc/apache2/sites-available/${sslDomain}.conf > /dev/null <<EOF
-
+                            cat <<VHOST > /etc/apache2/sites-available/${sslDomain}.conf
 <VirtualHost *:80>
     ServerName ${sslDomain}
 
