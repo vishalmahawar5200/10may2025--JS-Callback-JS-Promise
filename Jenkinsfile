@@ -128,13 +128,10 @@ pipeline {
                             echo "==> Updating system and installing Certbot"
                             apt update -y
                             apt upgrade -y
-                            apt install -y software-properties-common
-                            systemctl stop ufw || true
-                            systemctl disable ufw || true
                             apt install -y certbot python3-certbot-apache                          
 
                             echo "==> Creating Apache VirtualHost config for ${sslDomain}"
-                            cat <<VHOST > tee  /etc/apache2/sites-available/${sslDomain}.conf
+                            cat <<EOV > /etc/apache2/sites-available/${sslDomain}.conf
 <VirtualHost *:80>
     ServerName ${sslDomain}
 
@@ -152,7 +149,7 @@ EOF
                             sudo systemctl reload apache2
 
                             echo "==> Requesting SSL Certificate via Certbot"
-                            sudo certbot --apache -d ${sslDomain}
+                            certbot --apache --non-interactive --agree-tos -m vishalmahawar5200@gmail.com -d ${sslDomain}
 
                             echo "==> Confirming Certbot timer setup"
                             sudo systemctl list-timers | grep certbot || true
