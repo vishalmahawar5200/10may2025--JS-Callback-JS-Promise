@@ -127,10 +127,10 @@ pipeline {
                             echo "==> Updating system and installing Certbot"
                             apt update -y
                             apt upgrade -y
-                            apt install -y 
+                            apt install -y software-properties-common
                             systemctl stop ufw || true
                             systemctl disable ufw || true
-                            apt install -y certbot python3-certbot-apache  &&'certbot --version'                        
+                            apt install -y certbot python3-certbot-apache                          
 
                             echo "==> Creating Apache VirtualHost config for ${sslDomain}"
                             cat <<VHOST > /etc/apache2/sites-available/${sslDomain}.conf
