@@ -1,13 +1,17 @@
+// Define date globally to use in multiple stages
+def today = new Date().format("MMM-dd-yyyy", TimeZone.getTimeZone('UTC')).toLowerCase()
+
 pipeline {
     agent any
+
     environment {
         DOCKER_IMAGE = "vishalmahawar5200/10may2025"
         DEPLOY_USER = "root"
         DEPLOY_HOST = "65.108.149.166"
-        SSL_DOMAIN = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
     }
 
     stages {
+
         stage('Install Docker dependencies') {
             steps {
                 sh '''
@@ -32,13 +36,13 @@ pipeline {
             }
         }
 
-        stage('Check Version') {
+        stage('Check Docker Version') {
             steps {
                 sh "docker --version"
             }
         }
 
-        stage('Build Image') {
+        stage('Build Docker Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'docker-hub-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
                     sh 'docker build -t ${DOCKER_IMAGE}:t1 .'
@@ -62,36 +66,31 @@ pipeline {
         stage('Check Build Number') {
             steps {
                 script {
-                    def buildNumberStr = env.BUILD_NUMBER
-                    def buildNumberInt = buildNumberStr.toInteger() // Convert string to integer
+                    def buildNumberInt = env.BUILD_NUMBER.toInteger()
                     echo "Converted Build Number (Integer): ${buildNumberInt} (Type: ${buildNumberInt.getClass().getName()})"
                 }
             }
         }
 
-        stage('Formate Date') {
+        stage('Print Date Tag') {
             steps {
-                script {
-                    // Set 'today' once and reuse in all stages
-                    today = new Date().format("MMM-dd-yyyy", TimeZone.getTimeZone('UTC')).toLowerCase()
-                    echo "Today's tag: ${today}"
-                }
+                echo "Today's tag: ${today}"
             }
         }
 
-        stage('SSL Provisioning') {
+        stage('DNS Record for SSL') {
             steps {
                 script {
-                    // Ensure D_DATE is properly referenced
-                    def dateString = "${env.D_DATE}-v${env.BUILD_NUMBER}"
+                    def dnsRecord = "${today}-v${env.BUILD_NUMBER}"
                     sh """
-                        echo \$(date +%B-%d-%Y | tr '[:upper:]' '[:lower:]')-v${env.BUILD_NUMBER} IN A 65.108.149.166 | docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
+                        echo \$(date +%B-%d-%Y | tr '[:upper:]' '[:lower:]')-v${env.BUILD_NUMBER} IN A 65.108.149.166 | \
+                        docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
                     """
                 }
             }
         }
 
-        stage('Deploy to Another Server') {
+        stage('Deploy to Remote Server') {
             steps {
                 sshagent(credentials: ['ID_RSA']) {
                     script {
@@ -99,8 +98,8 @@ pipeline {
                         def hostPort = 8000 + env.BUILD_NUMBER.toInteger()
                         sh """
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST '
-                            docker pull ${DOCKER_IMAGE}:${imageTag}
-                            docker run -d -p ${hostPort}:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
+                                docker pull ${DOCKER_IMAGE}:${imageTag}
+                                docker run -d -p ${hostPort}:80 ${DOCKER_IMAGE}:${imageTag} /usr/sbin/apache2ctl -D FOREGROUND
                             '
                         """
                     }
@@ -108,10 +107,10 @@ pipeline {
             }
         }
 
-         stage("Configure Apache & SSL") {
+        stage("Configure Apache & SSL") {
             steps {
                 script {
-                    def subdomain = "${today}-v${BUILD_NUMBER}.vishalmahawar.shop"
+                    def subdomain = "${today}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
                     def hostPort = 8000 + env.BUILD_NUMBER.toInteger()
 
                     sshagent(credentials: ['ID_RSA']) {
@@ -122,8 +121,8 @@ cat > /etc/apache2/sites-available/${subdomain}.conf <<EOL
     ServerName ${subdomain}
 
     ProxyPreserveHost On
-    ProxyPass / http://localhost:${port}/
-    ProxyPassReverse / http://localhost:${port}/
+    ProxyPass / http://localhost:${hostPort}/
+    ProxyPassReverse / http://localhost:${hostPort}/
 
     ErrorLog \${APACHE_LOG_DIR}/${subdomain}_error.log
     CustomLog \${APACHE_LOG_DIR}/${subdomain}_access.log combined
@@ -144,12 +143,14 @@ EOF
             }
         }
 
-        stage('Restart Jenkins Container'){
-            steps{
-                sshagent(credentials: ['ID_RSA']){
+        stage('Restart Jenkins Container') {
+            steps {
+                sshagent(credentials: ['ID_RSA']) {
                     sh """
-                        ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST
-                        'docker restart 780b2234ce7b && docker ps -a'
+                        ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST <<EOF
+docker restart 780b2234ce7b
+docker ps -a
+EOF
                     """
                 }
             }
