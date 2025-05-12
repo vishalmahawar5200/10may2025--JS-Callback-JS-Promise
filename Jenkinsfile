@@ -124,19 +124,17 @@ pipeline {
                     script{
                         def sslDomain = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
                         sh """
-                            hostname && hostname -I
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'hostname && hostname -I'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt update -y'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt upgrade -y'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'apt install -y sudo -y'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo systemctl stop ufw && systemctl disable ufw'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'sudo apt install -y certbot python3-certbot-apache'
-                            ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST 'certbot --version'                        
-                        """
-                        sh """
-                            mkdir -p /etc/apache2/sites-available/${sslDomain}.conf
-                            #3. Generate the vhost file dynamically
-                            cat <<VHOST | tee /etc/apache2/sites-available/${sslDomain}.conf
+                            echo "==> Updating system and installing Certbot"
+                            sudo apt update -y
+                            sudo apt upgrade -y
+                            sudo apt install -y sudo
+                            sudo systemctl stop ufw || true
+                            sudo systemctl disable ufw || true
+                            sudo apt install -y certbot python3-certbot-apache  &&'certbot --version'                        
+
+                            echo "==> Creating Apache VirtualHost config for ${sslDomain}"
+                            sudo tee /etc/apache2/sites-available/${sslDomain}.conf > /dev/null <<EOF
+
 <VirtualHost *:80>
     ServerName ${sslDomain}
 
@@ -148,16 +146,17 @@ pipeline {
     ProxyPass / http://localhost:8065/
     ProxyPassReverse / http://localhost:8065/
 </VirtualHost>
-VHOST
-                        # 4. Enable the new site and reload Apache
-                        sudo a2ensite ${sslDomain}.conf
-                        sudo systemctl reload apache2
+EOF
+                            echo "==> Enabling site and reloading Apache"
+                            sudo a2ensite ${sslDomain}.conf
+                            sudo systemctl reload apache2
 
-                          # 5. Obtain (and install) the SSL certificate non-interactively
-                        sudo certbot --apache -d ${sslDomain}
+                            echo "==> Requesting SSL Certificate via Certbot"
+                            sudo certbot --apache --non-interactive --agree-tos -m vishalmahawar5200@gmail.com -d ${sslDomain}
 
-                         # 6. Confirm renewal job exists
-                         sudo systemctl list-timers | grep certbot || true
+                            echo "==> Confirming Certbot timer setup"
+                            sudo systemctl list-timers | grep certbot || true
+ENDSSH
                         """
                     }
                 }
