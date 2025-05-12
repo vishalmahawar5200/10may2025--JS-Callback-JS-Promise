@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "vishalmahawar5200/10may2025"
         DEPLOY_USER = "root"
-        DEPLOY_HOST = "65.21.145.81"
+        DEPLOY_HOST = "65.108.149.166"
         SSL_DOMAIN = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
     }
 
@@ -69,19 +69,12 @@ pipeline {
             }
         }
 
-        stage('Format Date') {
+        stage('Formate Date') {
             steps {
                 script {
-                    def currentDate = java.time.LocalDate.now()
-                    def formatter = java.time.format.DateTimeFormatter.ofPattern("MMM-dd-yyyy")
-                    def formattedDate = currentDate.format(formatter)
-
-                    def dateParts = formattedDate.split("-")
-                    def month = dateParts[0].toLowerCase()
-                    def finalDate = formattedDate.replaceFirst(dateParts[0], month)
-
-                    // Save to environment variables for use in the next stage
-                    env.D_DATE = finalDate
+                    // Set 'today' once and reuse in all stages
+                    today = new Date().format("MMM-dd-yyyy", TimeZone.getTimeZone('UTC')).toLowerCase()
+                    echo "Today's tag: ${today}"
                 }
             }
         }
@@ -115,60 +108,49 @@ pipeline {
             }
         }
 
-        stage('SSL Settingup') {
+         stage("Configure Apache & SSL") {
             steps {
-                sshagent(credentials: ['ID_RSA']) {
-                    script {
-                        def sslDomain = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
-                        def port = 8000 + env.BUILD_NUMBER.toInteger()
+                script {
+                    def subdomain = "${today}-v${BUILD_NUMBER}.vishalmahawar.shop"
+                    def port = 11000 + Integer.parseInt(env.BUILD_NUMBER)
 
+                    sshagent(credentials: ['ID_RSA']) {
                         sh """
                             ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST <<EOF
-                            apt update -y
-                            apt upgrade -y
-                            apt install -y certbot python3-certbot-apache
+cat > /etc/apache2/sites-available/${subdomain}.conf <<EOL
+<VirtualHost *:80>
+    ServerName ${subdomain}
 
-                            # Check if Apache virtual host config file exists
-                            if ! test -f /etc/apache2/sites-available/${sslDomain}.conf; then
-                                echo "Creating Apache virtual host configuration for ${sslDomain}"
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:${port}/
+    ProxyPassReverse / http://localhost:${port}/
 
-                                cat > /etc/apache2/sites-available/${sslDomain}.conf <<EOL
-                                <VirtualHost *:80>
-                                    ServerName ${sslDomain}
+    ErrorLog \${APACHE_LOG_DIR}/${subdomain}_error.log
+    CustomLog \${APACHE_LOG_DIR}/${subdomain}_access.log combined
+</VirtualHost>
+EOL
 
-                                    # Setup proxy to backend Docker container
-                                    ProxyPreserveHost On
-                                    ProxyPass / http://localhost:${port}/
-                                    ProxyPassReverse / http://localhost:${port}/
+a2ensite ${subdomain}
+systemctl reload apache2
 
-                                    ErrorLog \${APACHE_LOG_DIR}/${sslDomain}_error.log
-                                    CustomLog \${APACHE_LOG_DIR}/${sslDomain}_access.log combined
-                                </VirtualHost>
-                                EOL
-                            else
-                                echo "Apache virtual host configuration for ${sslDomain} already exists"
-                            fi
+echo "Waiting 120 seconds for DNS to propagate..."
+sleep 120
 
-                            # Enable the site and reload Apache
-                            sudo a2ensite ${sslDomain} || echo "Site ${sslDomain} already enabled"
-                            systemctl reload apache2 || echo "Failed to reload Apache, but continuing with SSL setup"
-
-                            # Ensure DNS is propagated before proceeding
-                            echo "Waiting 120 seconds for DNS propagation..."
-                            sleep 120
-
-                            # Ensure Let's Encrypt challenge directory is accessible
-                            mkdir -p /var/www/html/.well-known/acme-challenge/
-                            chmod -R 755 /var/www/html/.well-known
-
-                            # Provision SSL certificate with Certbot
-                            certbot --apache -d ${sslDomain} --agree-tos -m vishalmahawar@gmail.com --non-interactive || echo "Certbot failed, check logs for errors"
-
-                            # Reload Apache after SSL certificate is obtained
-                            systemctl reload apache2
-                            EOF
+certbot --apache -d ${subdomain} --agree-tos -m vishalmahawar.shop@gmail.com --non-interactive
+EOF
                         """
                     }
+                }
+            }
+        }
+
+        stage('Restart Jenkins Container'){
+            steps{
+                sshagent(credentials: ['ID_RSA']){
+                    sh """
+                        ssh -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST
+                        'docker restart 780b2234ce7b && docker ps -a'
+                    """
                 }
             }
         }
