@@ -71,17 +71,9 @@ pipeline {
                 }
             }
         }
-
-        stage('Print Date Tag') {
-            steps {
-                echo "Today's tag: ${today}"
-            }
-        }
-
-        stage('DNS Record for SSL') {
+        stage('Date ') {
             steps {
                 script {
-                    def dnsRecord = "${today}-v${env.BUILD_NUMBER}"
                     sh """
                         echo \$(date +%B-%d-%Y | tr '[:upper:]' '[:lower:]')-v${env.BUILD_NUMBER} IN A 65.108.149.166 | \
                         docker exec -i ubuntu-container tee -a /etc/coredns/zones/vishalmahawar.shop.db > /dev/null
@@ -131,9 +123,6 @@ EOL
 
 a2ensite ${subdomain}
 systemctl reload apache2
-
-echo "Waiting 120 seconds for DNS to propagate..."
-sleep 120
 
 certbot --apache -d ${subdomain} --agree-tos -m vishalmahawar.shop@gmail.com --non-interactive
 EOF
