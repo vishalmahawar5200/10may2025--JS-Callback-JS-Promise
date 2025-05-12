@@ -112,7 +112,7 @@ pipeline {
             steps {
                 script {
                     def subdomain = "${today}-v${BUILD_NUMBER}.vishalmahawar.shop"
-                    def port = 11000 + Integer.parseInt(env.BUILD_NUMBER)
+                    def hostPort = 8000 + env.BUILD_NUMBER.toInteger()
 
                     sshagent(credentials: ['ID_RSA']) {
                         sh """
