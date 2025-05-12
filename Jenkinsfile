@@ -115,9 +115,6 @@ cat > /etc/apache2/sites-available/${subdomain}.conf <<EOL
     ProxyPreserveHost On
     ProxyPass / http://localhost:${hostPort}/
     ProxyPassReverse / http://localhost:${hostPort}/
-
-    ErrorLog \${APACHE_LOG_DIR}/${subdomain}_error.log
-    CustomLog \${APACHE_LOG_DIR}/${subdomain}_access.log combined
 </VirtualHost>
 EOL
 
