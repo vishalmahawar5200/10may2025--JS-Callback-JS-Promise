@@ -142,8 +142,8 @@ pipeline {
     RewriteRule ^ https://%{SERVER_NAME}%{REQUEST_URI} [END,NE,R=permanent]
 
     ProxyPreserveHost On
-    ProxyPass / http://localhost:8069/
-    ProxyPassReverse / http://localhost:8069/
+    ProxyPass / http://localhost:8072/
+    ProxyPassReverse / http://localhost:8072/
 </VirtualHost>
 EOF
                             echo "==> Enabling site and reloading Apache"
