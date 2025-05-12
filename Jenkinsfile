@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_IMAGE = "vishalmahawar5200/10may2025"
         DEPLOY_USER = "root"
-        DEPLOY_HOST = "65.108.149.166"
+        DEPLOY_HOST = "65.21.145.81"
         SSL_DOMAIN = "${env.D_DATE}-v${env.BUILD_NUMBER}.vishalmahawar.shop"
     }
 
